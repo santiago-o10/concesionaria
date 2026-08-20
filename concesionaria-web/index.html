@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concesionaria Central</title>
+<link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="css/clientes.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<header class="barra">
+  <a class="marca" href="#" data-vista="inicio"><span>C</span> Concesionaria Central</a>
+  <nav>
+    <a href="#" data-vista="vehiculos">Vehículos</a>
+    <a href="#" data-vista="solicitud">Solicitar asesoría</a>
+  </nav>
+  <div id="zonaSesion"></div>
+</header>
+
+<main>
+  <section id="inicio" class="vista activa">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">CONCESIONARIA CENTRAL</p>
+        <h1>Encuentra tu próximo vehículo.</h1>
+        <p>Consulta nuestro inventario y agenda una asesoría comercial. Puedes navegar libremente; para realizar una solicitud solo necesitas una cuenta de cliente.</p>
+        <div class="acciones">
+          <button class="btn principal" data-vista="vehiculos">Ver vehículos</button>
+          <button class="btn secundario" data-vista="solicitud">Solicitar asesoría</button>
+        </div>
+      </div>
+      <div class="hero-card"><span>🚗</span><strong>Asesoría de 1 hora</strong><small>El sistema asigna automáticamente un asesor disponible.</small></div>
+    </div>
+  </section>
+
+  <section id="vehiculos" class="vista">
+    <div class="cabecera-vista"><div><p class="eyebrow">INVENTARIO</p><h2>Vehículos disponibles</h2></div></div>
+    <div id="listaVehiculos" class="grid"></div>
+  </section>
+
+  <section id="solicitud" class="vista">
+    <div class="cabecera-vista"><div><p class="eyebrow">ASESORÍA</p><h2>Solicita tu asesoría</h2><p>Debes iniciar sesión como cliente para confirmar la solicitud.</p></div></div>
+    <div id="bloqueSolicitud"></div>
+  </section>
+
+  <section id="panelCliente" class="vista privada">
+    <div class="cabecera-vista">
+      <div>
+        <p class="eyebrow">CLIENTE</p>
+        <h2>Mi cuenta</h2>
+        <p>Revisa tus asesorías y el estado de cada solicitud.</p>
+      </div>
+    </div>
+    <div id="clientePerfil" class="panel"></div>
+    <div id="misSolicitudes" class="lista"></div>
+    <div id="panelComercialCliente" class="panel"></div>
+  </section>
+
+  <section id="panelAsesor" class="vista privada">
+    <div class="cabecera-vista">
+      <div>
+        <p class="eyebrow">PANEL DEL ASESOR</p>
+        <h2>Mi agenda</h2>
+        <p>Consulta tus citas y registra atenciones presenciales cuando estés disponible.</p>
+      </div>
+      <button id="btnAtencionPresencial" class="btn principal" type="button">+ Atención presencial</button>
+    </div>
+    <div id="asesorPerfil" class="panel"></div>
+
+    <div id="panelAtencionPresencial" class="panel oculto">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">ATENCIÓN PRESENCIAL</p>
+          <h3>Registrar cliente en el concesionario</h3>
+          <p class="admin-subtexto">Solo puedes iniciar una atención si estás disponible y tienes una hora completa dentro de tu jornada.</p>
+        </div>
+      </div>
+      <form id="atencionPresencialForm" class="formulario">
+        <div class="dos">
+          <label>Cliente
+            <select id="presencialCliente" required>
+              <option value="">Cargando clientes...</option>
+            </select>
+          </label>
+          <label>Vehículo
+            <select id="presencialVehiculo" required>
+              <option value="">Cargando vehículos...</option>
+            </select>
+          </label>
+        </div>
+        <p id="atencionPresencialEstado" class="admin-subtexto"></p>
+        <p id="atencionPresencialMensaje" class="error"></p>
+        <div class="detalle-acciones">
+          <button id="btnConfirmarPresencial" class="btn principal" type="submit">Iniciar atención ahora</button>
+          <button id="btnCerrarPresencial" class="btn secundario" type="button">Cerrar</button>
+        </div>
+      </form>
+    </div>
+    <div class="panel filtros-agenda">
+      <label>Consultar fecha
+        <input id="fechaAgenda" type="date">
+      </label>
+      <button id="btnHoy" class="btn secundario pequeño">Ver hoy</button>
+    </div>
+    <div id="resumenAgenda" class="agenda-resumen"></div>
+    <div id="misCitas" class="lista"></div>
+
+    <div class="cabecera-vista">
+      <div>
+        <p class="eyebrow">MIS CLIENTES</p>
+        <h2>Clientes que has atendido</h2>
+        <p>Clientes con solicitudes asignadas a tu cuenta.</p>
+      </div>
+    </div>
+    <div id="misClientesAsesor" class="lista"></div>
+
+    <div class="cabecera-vista">
+      <div>
+        <p class="eyebrow">GESTIÓN COMERCIAL</p>
+        <h2>Mis oportunidades y seguimientos</h2>
+        <p>La asesoría no termina al marcarla realizada: registra qué pasó y qué debe hacerse después.</p>
+      </div>
+    </div>
+    <div id="panelComercialAsesor" class="panel"></div>
+  </section>
+<section id="panelAdmin" data-rol-requerido="ADMINISTRADOR" class="vista privada">
+    <div class="admin-nav" id="adminNav" aria-label="Administración">
+  <button class="admin-nav-item" id="adminNavVehiculos" type="button">
+    <span>🚗</span><strong>Vehículos</strong><small>Inventario</small>
+  </button>
+  <button class="admin-nav-item" id="adminNavAsesores" type="button">
+    <span>🧑‍💼</span><strong>Asesores</strong><small>Personal</small>
+  </button>
+  <button class="admin-nav-item" id="adminNavClientes" type="button">
+    <span>👤</span><strong>Clientes</strong><small>Usuarios registrados</small>
+  </button>
+  <button class="admin-nav-item" id="adminNavSolicitudes" type="button">
+    <span>📋</span><strong>Solicitudes</strong><small>Citas y asesorías</small>
+  </button>
+  <button class="admin-nav-item" id="adminNavComercial" type="button">
+    <span>📈</span><strong>Comercial</strong><small>Oportunidades y ventas</small>
+  </button>
+  <button class="admin-nav-item" id="adminNavFinanciacion" type="button">
+    <span>💳</span><strong>Financiación</strong><small>Solicitudes y planes</small>
+  </button>
+</div>
+    <div class="cabecera-vista">
+      <div>
+        <p class="eyebrow">ADMINISTRACIÓN</p>
+        <h2>Panel administrativo</h2>
+        <p>Gestiona el inventario de vehículos. Estas acciones solo están disponibles para administradores.</p>
+      </div>
+    </div>
+
+    <div class="admin-resumen" id="adminResumen"></div>
+
+    <div class="panel admin-panel admin-seccion" id="adminVistaVehiculos">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">INVENTARIO</p>
+          <h3>Vehículos registrados</h3>
+        </div>
+        <button class="btn principal" id="btnNuevoVehiculo">+ Agregar vehículo</button>
+      </div>
+      <div id="adminVehiculos" class="lista"></div>
+    </div>
+
+    <div class="panel admin-panel admin-seccion oculto" id="adminVistaAsesores">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">EQUIPO</p>
+          <h3>Asesores</h3>
+          <p class="admin-subtexto">Administra las cuentas, horarios y estado de los asesores.</p>
+        </div>
+        <button class="btn principal" id="btnNuevoAsesor">+ Agregar asesor</button>
+      </div>
+      <div id="adminAsesores" class="lista"></div>
+    </div>
+
+    <div class="panel admin-panel admin-seccion oculto" id="adminVistaClientes">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">ADMINISTRACIÓN</p>
+          <h3>Clientes registrados</h3>
+          <p class="admin-subtexto">Consulta y administra los clientes registrados en la concesionaria.</p>
+        </div>
+        <button class="btn principal" id="btnNuevoCliente" type="button">+ Agregar cliente</button>
+      </div>
+      <div class="admin-resumen" id="clientesResumen"></div>
+      <input id="buscarClienteAdmin" type="search" placeholder="Buscar por nombre, documento o usuario">
+      <div id="listaClientesAdmin" class="lista"></div>
+    </div>
+
+    <div class="panel admin-panel admin-seccion oculto" id="adminVistaSolicitudes">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">AGENDA</p>
+          <h3>Solicitudes y citas</h3>
+          <p class="admin-subtexto">Consulta todas las asesorías agendadas y gestiona su estado.</p>
+        </div>
+      </div>
+      <div class="admin-resumen" id="solicitudesResumen"></div>
+      <div id="adminSolicitudes" class="lista"></div>
+    </div>
+
+    <div class="panel admin-panel admin-seccion oculto" id="adminVistaFinanciacion">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">FINANCIACIÓN</p>
+          <h3>Solicitudes de financiación</h3>
+          <p class="admin-subtexto">Supervisa solicitudes asociadas a oportunidades comerciales.</p>
+        </div>
+      </div>
+      <div class="admin-resumen" id="financiacionAdminResumen"></div>
+      <div id="financiacionAdminLista" class="lista"></div>
+    </div>
+
+    <div class="panel admin-panel admin-seccion oculto" id="adminVistaComercial">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">GESTIÓN COMERCIAL</p>
+          <h3>Oportunidades y resultados</h3>
+          <p class="admin-subtexto">Supervisa clientes interesados, seguimientos y ventas.</p>
+        </div>
+      </div>
+      <div class="admin-resumen" id="comercialAdminResumen"></div>
+      <div id="comercialAdminLista" class="lista"></div>
+    </div>
+
+    <div class="panel oculto admin-form-seccion admin-seccion-asesores" id="adminAsesorFormPanel">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">EQUIPO</p>
+          <h3 id="adminAsesorFormTitulo">Nuevo asesor</h3>
+        </div>
+        <button class="btn secundario pequeño" id="btnCancelarAsesor">Cancelar</button>
+      </div>
+
+      <form id="adminAsesorForm" class="formulario">
+        <input type="hidden" id="adminAsesorId">
+
+        <div class="dos">
+          <label>Nombre<input id="adminAsesorNombre" maxlength="80" required></label>
+          <label>Apellido<input id="adminAsesorApellido" maxlength="80" required></label>
+        </div>
+
+        <div class="dos">
+          <label>Teléfono<input id="adminAsesorTelefono" maxlength="30" required></label>
+          <label>Correo<input id="adminAsesorCorreo" type="email" maxlength="120"></label>
+        </div>
+
+        <div class="dos">
+          <label>Especialidad<input id="adminAsesorEspecialidad" maxlength="100"></label>
+          <label>Estado
+            <select id="adminAsesorEstado" required>
+              <option value="ACTIVO">ACTIVO</option>
+              <option value="INACTIVO">INACTIVO</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="dos">
+          <label>Hora de inicio<input id="adminAsesorHoraInicio" type="time" value="08:00" readonly></label>
+          <label>Hora de fin<input id="adminAsesorHoraFin" type="time" value="18:00" readonly></label>
+        </div>
+
+        <div class="dos">
+          <label>Usuario<input id="adminAsesorUsuario" maxlength="50" required autocomplete="off"></label>
+          <label>Contraseña
+            <input id="adminAsesorContrasena" type="password" minlength="6" autocomplete="new-password">
+          </label>
+        </div>
+
+        <label>Concesionaria
+          <select id="adminAsesorConcesionaria" required><option value="">Cargando concesionarias...</option></select>
+        </label>
+
+        <p id="adminAsesorMensaje" class="error"></p>
+        <div class="detalle-acciones">
+          <button class="btn principal" type="submit">Guardar asesor</button>
+          <button class="btn secundario" type="button" id="btnCancelarAsesor2">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel oculto admin-form-seccion admin-seccion-vehiculos" id="adminFormPanel">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">INVENTARIO</p>
+          <h3 id="adminFormTitulo">Nuevo vehículo</h3>
+        </div>
+        <button class="btn secundario pequeño" id="btnCancelarVehiculo">Cancelar</button>
+      </div>
+
+      <form id="adminVehiculoForm" class="formulario">
+        <input type="hidden" id="adminVehiculoId">
+
+        <div class="dos">
+          <label>Marca
+            <select id="adminMarca" required><option value="">Cargando...</option></select>
+          </label>
+          <label>Modelo
+            <select id="adminModelo" required disabled><option value="">Selecciona una marca</option></select>
+          </label>
+        </div>
+
+        <div class="dos">
+          <label>Año<input id="adminAnio" type="number" min="1900" required></label>
+          <label>Tipo<input id="adminTipo" maxlength="50" required placeholder="Sedán, SUV, Pickup..."></label>
+        </div>
+
+        <div class="dos">
+          <label>Color<input id="adminColor" maxlength="40" required></label>
+          <label>Precio<input id="adminPrecio" type="number" min="1" step="0.01" required></label>
+        </div>
+
+        <div class="dos">
+          <label>Motor<input id="adminMotor" maxlength="80" required></label>
+          <label>Transmisión<input id="adminTransmision" maxlength="40" required></label>
+        </div>
+
+        <div class="dos">
+          <label>Combustible<input id="adminCombustible" maxlength="40" required></label>
+          <label>Estado
+            <select id="adminEstado" required>
+              <option value="DISPONIBLE">DISPONIBLE</option>
+              <option value="RESERVADO">RESERVADO</option>
+              <option value="VENDIDO">VENDIDO</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="dos">
+          <label>Cilindrada<input id="adminCilindrada" maxlength="120"></label>
+          <label>Potencia<input id="adminPotencia" maxlength="120"></label>
+        </div>
+
+        <div class="dos">
+          <label>Torque<input id="adminTorque" maxlength="120"></label>
+          <label>Tracción<input id="adminTraccion" maxlength="80"></label>
+        </div>
+
+        <div class="dos">
+          <label>Pasajeros<input id="adminPasajeros"></label>
+          <label>Capacidad baúl<input id="adminBaul"></label>
+        </div>
+
+        <div class="dos">
+          <label>Largo<input id="adminLargo"></label>
+          <label>Ancho<input id="adminAncho"></label>
+        </div>
+
+        <div class="dos">
+          <label>Alto<input id="adminAlto"></label>
+          <label>Peso<input id="adminPeso"></label>
+        </div>
+
+        <label>URL de imagen<input id="adminImagen" maxlength="1000" placeholder="https://..."></label>
+        <label>Seguridad<textarea id="adminSeguridad" maxlength="1000" rows="3"></textarea></label>
+        <label>Equipamiento<textarea id="adminEquipamiento" maxlength="1500" rows="3"></textarea></label>
+        <label>Descripción<textarea id="adminDescripcion" maxlength="500" rows="3"></textarea></label>
+
+        <p id="adminVehiculoMensaje" class="error"></p>
+        <div class="detalle-acciones">
+          <button class="btn principal" type="submit">Guardar vehículo</button>
+          <button class="btn secundario" type="button" id="btnCancelarVehiculo2">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel oculto admin-form-seccion admin-seccion-clientes" id="clienteFormPanel">
+      <div class="admin-panel-cabecera">
+        <div>
+          <p class="eyebrow">CLIENTE</p>
+          <h3 id="clienteFormTitulo">Nuevo cliente</h3>
+        </div>
+        <button class="btn secundario pequeño" id="btnCancelarCliente">Cancelar</button>
+      </div>
+
+      <form id="clienteAdminForm" class="formulario">
+        <input type="hidden" id="clienteAdminId">
+
+        <div class="dos">
+          <label>Nombre<input id="clienteNombre" required maxlength="80"></label>
+          <label>Apellido<input id="clienteApellido" required maxlength="80"></label>
+        </div>
+
+        <div class="dos">
+          <label>Documento<input id="clienteDocumento" required maxlength="30"></label>
+          <label>Ciudad<input id="clienteCiudad" maxlength="80"></label>
+        </div>
+
+        <div class="dos">
+          <label>Teléfono<input id="clienteTelefono" maxlength="30"></label>
+          <label>Correo<input id="clienteCorreo" type="email" maxlength="120"></label>
+        </div>
+
+        <div class="dos">
+          <label>Usuario<input id="clienteUsuario" required maxlength="60"></label>
+          <label>Contraseña<input id="clienteContrasena" type="password" minlength="6" placeholder="Dejar vacía para conservarla"></label>
+        </div>
+        <label>Estado
+          <select id="clienteEstado">
+            <option value="ACTIVO">ACTIVO</option>
+            <option value="INACTIVO">INACTIVO</option>
+          </select>
+        </label>
+
+        <p id="clienteAdminMensaje" class="error"></p>
+
+        <div class="detalle-acciones">
+          <button class="btn principal" type="submit">Guardar cliente</button>
+          <button class="btn secundario" type="button" id="btnCancelarCliente2">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<div id="modalSesion" class="modal oculto">
+  <div class="modal-box">
+    <button class="cerrar" id="cerrarModal">×</button>
+    <div id="loginBox">
+      <p class="eyebrow">ACCESO</p><h2>Iniciar sesión</h2>
+      <form id="loginForm">
+<label>Usuario<input id="loginUsuario" required autocomplete="username"></label>
+        <label>Contraseña<input id="loginContrasena" type="password" required autocomplete="current-password"></label>
+        <button class="btn principal ancho">Ingresar</button>
+        <p id="loginMensaje" class="error"></p>
+      </form>
+      <p class="alternativa">¿No tienes cuenta? <button id="mostrarRegistro" class="link">Registrarme como cliente</button></p>
+    </div>
+    <div id="registroBox" class="oculto">
+      <p class="eyebrow">NUEVA CUENTA</p><h2>Registro de cliente</h2>
+      <form id="registroForm">
+        <div class="dos"><label>Nombre<input id="regNombre" required></label><label>Apellido<input id="regApellido" required></label></div>
+        <div class="dos"><label>Documento<input id="regDocumento" required></label><label>Teléfono<input id="regTelefono" required></label></div>
+        <div class="dos"><label>Correo<input id="regCorreo" type="email"></label><label>Ciudad<input id="regCiudad"></label></div>
+        <div class="dos"><label>Usuario<input id="regUsuario" required></label><label>Contraseña<input id="regContrasena" type="password" minlength="6" required></label></div>
+        <button class="btn principal ancho">Crear cuenta</button><p id="registroMensaje" class="error"></p>
+      </form>
+      <p class="alternativa"><button id="mostrarLogin" class="link">Volver a iniciar sesión</button></p>
+    </div>
+  </div>
+</div>
+
+
+<div id="modalResultadoAsesoria" class="modal oculto">
+  <div class="modal-box detalle-modal">
+    <button class="cerrar" id="cerrarResultadoAsesoria">×</button>
+    <p class="eyebrow">CIERRE COMERCIAL</p>
+    <h2>¿Qué pasó con el cliente?</h2>
+    <form id="resultadoAsesoriaForm" class="formulario">
+      <input type="hidden" id="resultadoSolicitudId">
+      <label>Resultado
+        <select id="resultadoComercial" required>
+          <option value="">Selecciona un resultado</option>
+          <option value="INTERESADO">Cliente interesado</option>
+          <option value="SEGUIMIENTO">Interesado, requiere seguimiento</option>
+          <option value="COMPARANDO">Está comparando opciones</option>
+          <option value="OTRA_ASESORIA">Quiere otra asesoría</option>
+          <option value="NO_INTERESADO">No interesado</option>
+        </select>
+      </label>
+      <div id="resultadoMotivoPerdidaWrap" class="panel oculto">
+        <strong>Si no está interesado</strong>
+        <label>Motivo de pérdida
+          <select id="resultadoMotivoPerdida">
+            <option value="">Selecciona un motivo</option>
+            <option value="PRECIO">Precio fuera de presupuesto</option>
+            <option value="VEHICULO">No le gustó el vehículo</option>
+            <option value="OTRA_MARCA">Eligió otra marca</option>
+            <option value="OTRO_CONCESIONARIO">Compró en otro concesionario</option>
+            <option value="FINANCIACION_RECHAZADA">No consiguió financiación</option>
+            <option value="CAMBIO_NECESIDAD">Cambió de necesidad</option>
+            <option value="NO_DESEA_COMPRAR">Ya no desea comprar</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </label>
+      </div>
+      <div class="dos">
+        <label>Presupuesto aproximado
+          <select id="resultadoPresupuesto">
+            <option value="">Selecciona un rango</option>
+            <option value="30000000">Hasta $30 millones</option>
+            <option value="50000000">Hasta $50 millones</option>
+            <option value="80000000">Hasta $80 millones</option>
+            <option value="120000000">Hasta $120 millones</option>
+            <option value="200000000">Más de $120 millones</option>
+          </select>
+        </label>
+        <label>Forma de pago
+          <select id="resultadoFormaPago">
+            <option value="">No definido</option><option value="CONTADO">Contado</option><option value="FINANCIAMIENTO">Financiación</option>
+          </select>
+        </label>
+      </div>
+      <div id="resultadoFinanciacionWrap" class="panel oculto">
+        <strong>Solicitud de financiación</strong>
+        <label>Plan de financiación
+          <select id="resultadoFinanciacion"><option value="">Selecciona una financiación</option></select>
+        </label>
+        <div class="dos">
+          <label>Cuota inicial<input id="resultadoCuotaInicial" type="number" min="0" step="1000"></label>
+          <label>Plazo (meses)
+          <select id="resultadoPlazoMeses">
+            <option value="">Selecciona el plazo</option>
+            <option value="12">12 meses</option>
+            <option value="24">24 meses</option>
+            <option value="36">36 meses</option>
+            <option value="48">48 meses</option>
+            <option value="60">60 meses</option>
+          </select>
+        </label>
+        </div>
+        <small>El monto a financiar se calcula automáticamente como vehículo menos cuota inicial.</small>
+      </div>
+      <label>Observaciones<textarea id="resultadoObservaciones" rows="4" maxlength="1000" placeholder="Qué le gustó, qué objeciones tuvo, qué necesita..."></textarea></label>
+      <div id="bloqueSeguimientoResultado" class="panel oculto">
+        <strong>Programar seguimiento</strong>
+        <div class="dos">
+          <label>Fecha<input id="resultadoFechaSeguimiento" type="date"></label>
+          <label>Medio<select id="resultadoMedioSeguimiento"><option value="LLAMADA">Llamada</option><option value="WHATSAPP">WhatsApp</option><option value="CORREO">Correo</option><option value="PRESENCIAL">Presencial</option></select></label>
+        </div>
+      </div>
+      <p id="resultadoAsesoriaMensaje" class="error"></p>
+      <button class="btn principal ancho" type="submit">Guardar resultado</button>
+    </form>
+  </div>
+</div>
+
+
+
+<div id="modalCierreOportunidad" class="modal oculto">
+  <div class="modal-box detalle-modal">
+    <button class="cerrar" type="button" onclick="document.getElementById('modalCierreOportunidad').classList.add('oculto')">×</button>
+    <p class="eyebrow">GESTIÓN COMERCIAL</p>
+    <h2>¿Qué pasó con el cliente?</h2>
+    <form id="cierreOportunidadForm" class="formulario" onsubmit="guardarCierreOportunidad(event)">
+      <input type="hidden" id="cierreOportunidadId">
+      <label>Resultado
+        <select id="cierreAccion" required onchange="actualizarCierreOportunidad()">
+          <option value="">Selecciona una opción</option>
+          <option value="COMPRAR">Quiere comprar</option>
+          <option value="SEGUIMIENTO">Sigue interesado</option>
+          <option value="PENSAR">Quiere pensarlo</option>
+          <option value="COMPARAR">Está comparando opciones</option>
+          <option value="OTRA_ASESORIA">Quiere otra asesoría</option>
+          <option value="NO_INTERESADO">No está interesado</option>
+        </select>
+      </label>
+      <div id="cierrePerdidaWrap" class="panel oculto">
+        <strong>Cerrar como oportunidad perdida</strong>
+        <label>Motivo
+          <select id="cierreMotivoPerdida">
+            <option value="">Selecciona un motivo</option>
+            <option value="PRECIO">Precio fuera de presupuesto</option>
+            <option value="VEHICULO">No le gustó el vehículo</option>
+            <option value="OTRA_MARCA">Eligió otra marca</option>
+            <option value="OTRO_CONCESIONARIO">Compró en otro concesionario</option>
+            <option value="FINANCIACION_RECHAZADA">No consiguió financiación</option>
+            <option value="CAMBIO_NECESIDAD">Cambió de necesidad</option>
+            <option value="NO_DESEA_COMPRAR">Ya no desea comprar</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </label>
+      </div>
+      <div id="cierreSeguimientoWrap" class="panel oculto">
+        <strong>Próxima acción</strong>
+        <div class="dos">
+          <label>Fecha<input id="cierreFecha" type="date"></label>
+          <label>Medio
+            <select id="cierreMedio">
+              <option value="LLAMADA">Llamada</option>
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="CORREO">Correo</option>
+              <option value="PRESENCIAL">Presencial</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <label>Observaciones
+        <textarea id="cierreObservaciones" rows="4" maxlength="1000" placeholder="Qué ocurrió y qué debe saber la concesionaria..."></textarea>
+      </label>
+      <p id="cierreMensaje" class="error"></p>
+      <button class="btn principal ancho" type="submit">Guardar y continuar</button>
+    </form>
+  </div>
+</div>
+
+<div id="modalPerfil" class="modal oculto">
+  <div class="modal-box perfil-modal">
+    <button class="cerrar" id="cerrarPerfil">×</button>
+    <p class="eyebrow" id="perfilRol">MI PERFIL</p>
+    <h2 id="perfilNombre">Mi perfil</h2>
+    <div id="perfilDatos" class="perfil-datos"></div>
+    <div id="perfilAcciones" class="perfil-acciones"></div>
+  </div>
+</div>
+
+
+<div id="modalEditarPerfil" class="modal oculto">
+  <div class="modal-box perfil-modal">
+    <button class="cerrar" id="cerrarEditarPerfil">×</button>
+    <p class="eyebrow">MI CUENTA</p>
+    <h2>Editar perfil</h2>
+    <form id="editarPerfilForm">
+      <div class="dos">
+        <label>Nombre<input id="editNombre" required></label>
+        <label>Apellido<input id="editApellido" required></label>
+      </div>
+      <div class="dos">
+        <label>Teléfono<input id="editTelefono" required></label>
+        <label>Ciudad<input id="editCiudad"></label>
+      </div>
+      <label>Correo<input id="editCorreo" type="email"></label>
+      <label>Nueva contraseña
+        <input id="editContrasena" type="password" minlength="6" placeholder="Déjalo vacío para conservarla">
+      </label>
+      <button class="btn principal ancho">Guardar cambios</button>
+      <p id="editMensaje" class="error"></p>
+    </form>
+  </div>
+</div>
+
+
+
+<div id="modalVehiculo" class="modal oculto">
+  <div class="modal-box detalle-modal">
+    <button class="cerrar" id="cerrarVehiculo">×</button>
+    <div id="detalleVehiculoContenido"></div>
+  </div>
+</div>
+\n<div id="toast"></div>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+  <script src="js/clientes.js"></script>
+  <script src="js/admin.js"></script>
+<script src="js/comercial.js"></script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  const r=document.getElementById("resultadoComercial");
+  const wrap=document.getElementById("resultadoMotivoPerdidaWrap");
+  const seg=document.getElementById("bloqueSeguimientoResultado");
+  if(r){
+    r.addEventListener("change",()=>{
+      const v=r.value;
+      if(wrap) wrap.classList.toggle("oculto",v!=="NO_INTERESADO");
+      if(seg) seg.classList.toggle("oculto",!["INTERESADO","SEGUIMIENTO","COMPARANDO","OTRA_ASESORIA"].includes(v));
+    });
+  }
+});
+</script>
+</body>
+</html>
