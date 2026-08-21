@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: concesionaria-api
+    runtime: docker
+    rootDir: concesionaria_
+    dockerfilePath: Dockerfile
+    healthCheckPath: /api/salud
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: APP_JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: concesionaria-web
+    runtime: docker
+    rootDir: concesionaria-web
+    dockerfilePath: Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: concesionaria-api
+          property: host
