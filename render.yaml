@@ -1,3 +1,9 @@
+databases:
+  - name: concesionaria-db
+    databaseName: concesionaria
+    user: concesionaria
+    plan: free
+
 services:
   - type: web
     name: concesionaria-api
@@ -6,12 +12,26 @@ services:
     dockerfilePath: Dockerfile
     healthCheckPath: /api/salud
     envVars:
-      - key: SPRING_DATASOURCE_URL
-        sync: false
+      - key: DB_HOST
+        fromDatabase:
+          name: concesionaria-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: concesionaria-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: concesionaria-db
+          property: database
       - key: SPRING_DATASOURCE_USERNAME
-        sync: false
+        fromDatabase:
+          name: concesionaria-db
+          property: user
       - key: SPRING_DATASOURCE_PASSWORD
-        sync: false
+        fromDatabase:
+          name: concesionaria-db
+          property: password
       - key: APP_JWT_SECRET
         generateValue: true
 

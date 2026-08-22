@@ -1,5 +1,7 @@
 // URL Base de la API REST de Spring Boot
-const API = "http://localhost:8081";
+// window.API_URL lo inyecta /config.js (server.js) a partir de la variable
+// de entorno API_URL en Render. En local, si no existe, cae al puerto 8081.
+const API = window.API_URL || "http://localhost:8081";
 
 const form = document.getElementById("solicitudForm");
 const nombreInput = document.getElementById("nombre");

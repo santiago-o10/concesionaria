@@ -1,4 +1,23 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: concesionaria-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: concesionaria
+      POSTGRES_USER: concesionaria
+      POSTGRES_PASSWORD: pass123
+    volumes:
+      - concesionaria-db-data:/var/lib/postgresql/data
+      # Se ejecuta una sola vez, la primera vez que se crea el volumen.
+      - ./concesionaria_/POSTGRES_SCHEMA.sql:/docker-entrypoint-initdb.d/POSTGRES_SCHEMA.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U concesionaria -d concesionaria"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ./concesionaria_
@@ -8,13 +27,15 @@ services:
       - "8081:8081"
     environment:
       PORT: 8081
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:oracle:thin:@host.docker.internal:1521:XE}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: concesionaria
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-concesionaria}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-pass123}
       APP_JWT_SECRET: ${APP_JWT_SECRET:-ConcesionariaLocalJwtSecretKey2026Segura1234567890}
-      JAVA_TOOL_OPTIONS: -Doracle.jdbc.timezoneAsRegion=false
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
     build:
@@ -25,6 +46,10 @@ services:
       - "8080:8080"
     environment:
       PORT: 8080
+      API_URL: http://localhost:8081
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  concesionaria-db-data:
