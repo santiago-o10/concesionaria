@@ -21,8 +21,16 @@ app.get('/config.js', (req, res) => {
     res.send(`window.API_URL = ${JSON.stringify(resolverApiUrl())};`);
 });
 
-// Servir archivos estáticos (html, css, js)
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, {
+    setHeaders: (res, filePath) => {
+        if (/\.(html|css|js)$/i.test(filePath)) {
+            const contentType = res.getHeader('Content-Type');
+            if (contentType && !String(contentType).includes('charset=')) {
+                res.setHeader('Content-Type', `${contentType}; charset=utf-8`);
+            }
+        }
+    }
+}));
 
 // Ruta principal redirige a index.html
 app.get('/', (req, res) => {

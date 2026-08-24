@@ -1,19 +1,27 @@
 package co.edu.uniremington.concesionaria.controllers;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import co.edu.uniremington.concesionaria.dto.CambiarEstadoRequest;
 import co.edu.uniremington.concesionaria.models.SolicitudAtencion;
 import co.edu.uniremington.concesionaria.services.SolicitudAtencionService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/solicitudes")
@@ -84,7 +92,7 @@ public class SolicitudAtencionController {
     }
 
     @PutMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('ASESOR', 'CLIENTE')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'ASESOR', 'CLIENTE')")
     public ResponseEntity<SolicitudAtencion> cambiarEstado(
             @PathVariable Long id,
             @Valid @RequestBody CambiarEstadoRequest body,
@@ -128,6 +136,10 @@ public class SolicitudAtencionController {
 
             // Un asesor puede iniciar o terminar su atención y registrar una inasistencia.
             if (!List.of("ATENDIENDO", "REALIZADA", "NO_ASISTIO").contains(nuevoEstado)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } else if ("ROLE_ADMINISTRADOR".equals(rol)) {
+            if (!List.of("ATENDIENDO", "REALIZADA", "NO_ASISTIO", "CANCELADA").contains(nuevoEstado)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
