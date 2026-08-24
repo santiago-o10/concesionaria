@@ -10,5 +10,5 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/concesionaria-api-1.0.0.jar app.jar
 
-EXPOSE 10000
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -23,8 +23,8 @@ más para desplegar.
 - Se pueden reservar el mismo día.
 - Los horarios pasados u ocupados no se muestran.
 - El backend vuelve a validar disponibilidad al reservar.
-- El asesor es quien inicia/finaliza su atención.
-- El administrador supervisa, pero no puede iniciar, finalizar ni marcar inasistencia de una cita.
+- El asesor puede iniciar/finalizar su atención.
+- El administrador puede gestionar el estado de las citas y registrar el resultado comercial; el asesor conserva la validación de pertenencia cuando actúa sobre sus propias citas.
 - Una asesoría finalizada debe tener resultado comercial.
 - Financiación: solicitud pendiente -> en estudio -> aprobada/rechazada. Solo una financiación aprobada permite registrar una venta financiada.
 - Un vehículo vendido pasa a `VENDIDO`.
