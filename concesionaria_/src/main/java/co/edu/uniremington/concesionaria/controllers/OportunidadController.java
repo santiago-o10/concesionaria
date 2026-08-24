@@ -8,10 +8,11 @@ import jakarta.validation.Valid; import org.springframework.http.*; import org.s
  @GetMapping @PreAuthorize("hasRole('ADMINISTRADOR')") public List<Oportunidad> all(){return service.listarTodos();}
  @GetMapping("/asesor/me") @PreAuthorize("hasRole('ASESOR')") public List<Oportunidad> me(Authentication a){return service.listarPorAsesor(id(a));}
  @GetMapping("/cliente/me") @PreAuthorize("hasRole('CLIENTE')") public List<Oportunidad> cliente(Authentication a){return service.listarPorCliente(id(a));}
- @PostMapping("/asesoria/{solicitudId}/resultado") @PreAuthorize("hasRole('ASESOR')") public ResponseEntity<Oportunidad> resultado(@PathVariable Long solicitudId,@Valid @RequestBody ResultadoAsesoriaRequest r,Authentication a){
+ @PostMapping("/asesoria/{solicitudId}/resultado") @PreAuthorize("hasAnyRole('ASESOR','ADMINISTRADOR')") public ResponseEntity<Oportunidad> resultado(@PathVariable Long solicitudId,@Valid @RequestBody ResultadoAsesoriaRequest r,Authentication a){
   Long asesorId=id(a);
   var solicitud=solicitudes.findById(solicitudId).orElseThrow(()->new co.edu.uniremington.concesionaria.exceptions.RecursoNoEncontradoException("No existe la asesoría."));
-  if(solicitud.getAsesor()==null || !asesorId.equals(solicitud.getAsesor().getIdAsesor())) throw new org.springframework.security.access.AccessDeniedException("La asesoría no pertenece al asesor autenticado.");
+  String rol=a.getAuthorities().stream().findFirst().map(x->x.getAuthority()).orElse("");
+  if("ROLE_ASESOR".equals(rol) && (solicitud.getAsesor()==null || !asesorId.equals(solicitud.getAsesor().getIdAsesor()))) throw new org.springframework.security.access.AccessDeniedException("La asesoría no pertenece al asesor autenticado.");
   Oportunidad resultado=service.crearResultado(solicitudId,r.resultado(),r.observaciones(),r.motivoPerdida(),r.presupuesto(),r.formaPago(),r.financiacionId(),r.crearSeguimiento(),r.fechaSeguimiento(),r.medioSeguimiento(),r.cuotaInicial(),r.plazoMeses());
   return ResponseEntity.status(HttpStatus.CREATED).body(resultado);}
  @PostMapping("/{id}/cierre") @PreAuthorize("hasRole('ASESOR')") public Oportunidad cierre(@PathVariable Long id,@Valid @RequestBody CierreOportunidadRequest r,Authentication a){

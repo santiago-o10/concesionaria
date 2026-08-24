@@ -18,6 +18,7 @@ function resolverApiUrl() {
 // Se genera en cada request para que siempre refleje la variable de entorno actual.
 app.get('/config.js', (req, res) => {
     res.type('application/javascript');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.send(`window.API_URL = ${JSON.stringify(resolverApiUrl())};`);
 });
 
@@ -28,6 +29,7 @@ app.use(express.static(__dirname, {
             if (contentType && !String(contentType).includes('charset=')) {
                 res.setHeader('Content-Type', `${contentType}; charset=utf-8`);
             }
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         }
     }
 }));
