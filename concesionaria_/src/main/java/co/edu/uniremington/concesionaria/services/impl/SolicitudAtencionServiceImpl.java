@@ -1,5 +1,16 @@
 package co.edu.uniremington.concesionaria.services.impl;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import co.edu.uniremington.concesionaria.exceptions.RecursoNoEncontradoException;
 import co.edu.uniremington.concesionaria.exceptions.ReglaNegocioException;
 import co.edu.uniremington.concesionaria.models.Asesor;
@@ -9,15 +20,6 @@ import co.edu.uniremington.concesionaria.repositorys.AsesorRepository;
 import co.edu.uniremington.concesionaria.repositorys.ClienteRepository;
 import co.edu.uniremington.concesionaria.repositorys.SolicitudAtencionRepository;
 import co.edu.uniremington.concesionaria.services.SolicitudAtencionService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 @Service
 public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
@@ -27,6 +29,7 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
     private static final int TOLERANCIA_MINUTOS = 15;
     private static final int MAX_INASISTENCIAS_BLOQUEO = 3;
     private static final int HORAS_BLOQUEO_INASISTENCIAS = 24;
+    private static final ZoneId ZONA_HORARIA_CONCESIONARIA = ZoneId.of("America/Bogota");
 
     private static final List<String> ESTADOS_VALIDOS = List.of(
             "PENDIENTE", "ATENDIENDO", "REALIZADA", "NO_ASISTIO", "CANCELADA"
@@ -78,7 +81,7 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
         List<SolicitudAtencion> delCliente = repository.findByClienteIdCliente(idCliente);
         actualizarEstadosVencidos(delCliente);
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = ahoraLocal();
         long futurasActivas = delCliente.stream()
                 .filter(this::esCitaActiva)
                 .filter(x -> fechaHoraInicio(x).isAfter(ahora))
@@ -116,7 +119,7 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
 
         solicitud.setAsesor(asesor);
         solicitud.setDisponibilidad(null);
-        solicitud.setFechaSolicitud(LocalDateTime.now());
+        solicitud.setFechaSolicitud(ahoraLocal());
         solicitud.setEstado("PENDIENTE");
 
         return repository.save(solicitud);
@@ -204,7 +207,7 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
         }
 
         LocalDateTime inicioProgramado = fechaHoraInicio(solicitud);
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = ahoraLocal();
         String estado = nuevoEstado.toUpperCase();
 
         if ("CANCELADA".equals(estado) && !ahora.isBefore(inicioProgramado.minusHours(1))) {
@@ -259,20 +262,20 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
         if (!"ACTIVO".equalsIgnoreCase(asesor.getEstado())) {
             throw new ReglaNegocioException("El asesor no está activo para atender en este momento.");
         }
-        LocalDate hoy = LocalDate.now();
-        LocalTime ahora = LocalTime.now().withSecond(0).withNano(0);
+        LocalDate hoy = fechaLocal();
+        LocalTime ahora = horaLocal().withSecond(0).withNano(0);
         if (!estaDentroDelHorarioLaboral(asesor, ahora)) {
             throw new ReglaNegocioException("El asesor está fuera de su horario laboral.");
         }
         if (!estaLibre(asesor, hoy, ahora, null)) {
             throw new ReglaNegocioException("El asesor ya está ocupado en este momento.");
         }
-        solicitud.setFechaSolicitud(LocalDateTime.now());
+        solicitud.setFechaSolicitud(ahoraLocal());
         solicitud.setFechaAtencion(hoy);
         solicitud.setHoraAtencion(ahora);
         solicitud.setTipoAtencion("PRESENCIAL");
         solicitud.setEstado("ATENDIENDO");
-        solicitud.setFechaInicioAtencion(LocalDateTime.now());
+        solicitud.setFechaInicioAtencion(ahoraLocal());
         solicitud.setAsesor(asesor);
         solicitud.setDisponibilidad(null);
         return repository.save(solicitud);
@@ -300,7 +303,7 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
 
     private void validarFechaHoraFutura(LocalDate fecha, LocalTime hora) {
         LocalDateTime inicio = LocalDateTime.of(fecha, hora);
-        if (inicio.isBefore(LocalDateTime.now())) {
+        if (inicio.isBefore(ahoraLocal())) {
             throw new ReglaNegocioException("La cita debe programarse para una fecha y hora futuras.");
         }
     }
@@ -465,7 +468,7 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
                 || x.getFechaAtencion() == null || x.getHoraAtencion() == null) return false;
 
         LocalDateTime limite = fechaHoraInicio(x).plusMinutes(TOLERANCIA_MINUTOS);
-        if (LocalDateTime.now().isAfter(limite)) {
+        if (ahoraLocal().isAfter(limite)) {
             x.setEstado("NO_ASISTIO");
             return true;
         }
@@ -474,16 +477,16 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
 
     @Override
     public List<LocalTime> horariosDisponibles(LocalDate fecha) {
-        if (fecha == null || fecha.isBefore(LocalDate.now())) return List.of();
+        if (fecha == null || fecha.isBefore(fechaLocal())) return List.of();
 
         List<LocalTime> horarios = new ArrayList<>();
-        LocalTime ahora = LocalTime.now();
+        LocalTime ahora = horaLocal();
         for (LocalTime hora = LocalTime.of(8, 0);
              hora.plusHours(DURACION_ASESORIA_HORAS).compareTo(LocalTime.of(18, 0)) <= 0;
              hora = hora.plusHours(DURACION_ASESORIA_HORAS)) {
 
             final LocalTime inicio = hora;
-            if (fecha.equals(LocalDate.now()) && !inicio.isAfter(ahora)) continue;
+            if (fecha.equals(fechaLocal()) && !inicio.isAfter(ahora)) continue;
 
             boolean libre = asesorRepository.findByEstadoIgnoreCase("ACTIVO").stream()
                     .anyMatch(a -> estaDentroDelHorarioLaboral(a, inicio)
@@ -491,5 +494,17 @@ public class SolicitudAtencionServiceImpl implements SolicitudAtencionService {
             if (libre) horarios.add(inicio);
         }
         return horarios;
+    }
+
+    private LocalDateTime ahoraLocal() {
+        return LocalDateTime.now(ZONA_HORARIA_CONCESIONARIA);
+    }
+
+    private LocalDate fechaLocal() {
+        return ahoraLocal().toLocalDate();
+    }
+
+    private LocalTime horaLocal() {
+        return ahoraLocal().toLocalTime();
     }
 }

@@ -2,6 +2,7 @@ package co.edu.uniremington.concesionaria.controllers;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -118,7 +119,7 @@ public class SolicitudAtencionController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             if (actual.getFechaAtencion() != null && actual.getHoraAtencion() != null
-                    && !java.time.LocalDateTime.now().isBefore(
+                    && !java.time.LocalDateTime.now(ZoneId.of("America/Bogota")).isBefore(
                         java.time.LocalDateTime.of(actual.getFechaAtencion(), actual.getHoraAtencion()).minusHours(1))) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
