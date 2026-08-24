@@ -406,8 +406,11 @@ async function prepararSolicitud(){
      form.insertAdjacentHTML("afterend",`<section id="historialCitasCliente" class="panel"><h3>Mi historial de asesorías</h3><p>${resumen}</p></section>`);
  }catch(e){ console.warn("No se pudo cargar el historial:",e.message); }
  try{const vs=await api("/api/vehiculos/estado/DISPONIBLE");v.innerHTML=`<option value="">Selecciona un vehículo</option>`+vs.map(x=>`<option value="${x.idVehiculo}">${esc((x.modelo?.marca?.nombre||"")+" "+(x.modelo?.nombre||""))} · ${x.anio}</option>`).join("");}catch(e){v.innerHTML=`<option>Error</option>`;}
- const d=new Date(); f.min=d.toISOString().slice(0,10);
- f.addEventListener("change",async()=>{h.disabled=true;h.innerHTML="<option>Cargando...</option>";try{const hs=await api("/api/solicitudes/horarios-disponibles/"+f.value);h.innerHTML=`<option value="">Selecciona una hora</option>`+hs.map(x=>`<option value="${x.slice(0,5)}">${x.slice(0,5)} - ${sumar(x,1)}</option>`).join("");h.disabled=!hs.length;}catch(e){h.innerHTML="<option>Error</option>";}});
+ f.min=fechaLocalHoy();
+ f.value=fechaLocalHoy();
+ const cargarHorasDisponibles=async()=>{h.disabled=true;h.innerHTML="<option>Cargando...</option>";try{const hs=await api("/api/solicitudes/horarios-disponibles/"+f.value);h.innerHTML=`<option value="">Selecciona una hora</option>`+hs.map(x=>`<option value="${x.slice(0,5)}">${x.slice(0,5)} - ${sumar(x,1)}</option>`).join("");h.disabled=!hs.length;}catch(e){h.innerHTML="<option>Error</option>";}};
+ f.addEventListener("change",cargarHorasDisponibles);
+ cargarHorasDisponibles();
  document.getElementById("solicitudForm").addEventListener("submit",async e=>{
   e.preventDefault(); const msg=document.getElementById("solMsg");msg.textContent="";
   try{const me=await api("/api/clientes/me");const data=await api("/api/solicitudes",{method:"POST",headers:authHeaders(),body:JSON.stringify({fechaAtencion:f.value,horaAtencion:h.value,tipoAtencion:"Asesoría para compra de vehículo",cliente:{idCliente:me.idCliente},vehiculo:{idVehiculo:Number(v.value)}})});msg.className="ok";msg.textContent=`Solicitud creada. Asesor asignado: ${data.asesor?.nombre||"automático"} ${data.asesor?.apellido||""}`;e.target.reset();}catch(err){msg.textContent=err.message;}
